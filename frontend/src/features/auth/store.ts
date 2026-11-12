@@ -1,1 +1,1 @@
-export { useSessionStore } from './sessionStore'
+export { useAuthStore as useSessionStore, useAuthStore } from '@/store/authStore'

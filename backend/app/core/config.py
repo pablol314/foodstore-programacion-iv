@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,10 +13,10 @@ class Settings(BaseSettings):
     )
 
     database_url: str = 'sqlite:///./foodstore.db'
-    secret_key: str = 'replace-this-development-key-with-a-long-random-value'
+    secret_key: str = Field(default='replace-this-development-key-with-a-long-random-value', min_length=32)
     algorithm: str = 'HS256'
     access_token_expire_minutes: int = 30
-    frontend_origins: str = 'http://localhost:5173'
+    frontend_origin: str = 'http://localhost:5173'
     cookie_secure: bool = False
     admin_username: str = 'admin'
     admin_email: str = 'admin@example.com'
@@ -23,7 +24,7 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.frontend_origins.split(',') if origin.strip()]
+        return [origin.strip() for origin in self.frontend_origin.split(',') if origin.strip()]
 
 
 @lru_cache

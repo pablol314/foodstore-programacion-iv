@@ -7,7 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.core.seed import seed
-from app.tpi.routers import router
+from app.modules.auth.router import router as auth_router
+from app.modules.categorias.router import router as categorias_router
+from app.modules.pedidos.router import router as pedidos_router
+from app.modules.productos.router import router as productos_router
+from app.modules.usuarios.router import router as usuarios_router
 
 
 @asynccontextmanager
@@ -31,7 +35,8 @@ def create_app() -> FastAPI:
         allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allow_headers=['*'],
     )
-    app.include_router(router)
+    for router in (auth_router, usuarios_router, categorias_router, productos_router, pedidos_router):
+        app.include_router(router, prefix='/api/v1')
 
     @app.get('/health', tags=['Sistema'])
     def health() -> dict[str, str]:

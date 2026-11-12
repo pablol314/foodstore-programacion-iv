@@ -12,10 +12,10 @@ class BaseRepository(Generic[ModelT]):
         self.session = session
         self.model = model
 
-    def get(self, entity_id: int) -> ModelT | None:
+    def get_by_id(self, entity_id: int) -> ModelT | None:
         return self.session.get(self.model, entity_id)
 
-    def list(self) -> list[ModelT]:
+    def get_all(self) -> list[ModelT]:
         return list(self.session.exec(select(self.model)).all())
 
     def add(self, entity: ModelT) -> ModelT:
@@ -33,3 +33,7 @@ class BaseRepository(Generic[ModelT]):
     def delete(self, entity: ModelT) -> None:
         self.session.delete(entity)
         self.session.flush()
+
+    # Short aliases keep repository calls readable in the domain services.
+    get = get_by_id
+    list = get_all

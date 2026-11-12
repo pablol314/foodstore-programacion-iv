@@ -1,64 +1,332 @@
 @api = http://localhost:8000/api/v1
 @admin = admin
 @adminPassword = Admin1234!
+@cliente = cliente_demo
+@clientePassword = ClienteDemo123!
+@clienteEmail = cliente.demo@example.com
+@otroCliente = cliente_demo2
+@otroClientePassword = ClienteDemo456!
+@clienteId = 2
+@otroClienteId = 3
+@productoSemilla = 1
+@productoInexistente = 999999
+@pedidoSemilla = 1
+@pedidoAdministrativo = 2
 
-### Inicializar sesión administrativa
+# Ejecutar sobre una base de demostración recién inicializada con `python -m app.db.seed`.
+# Los IDs de ejemplo suponen que el admin y el seed son los únicos registros iniciales.
+# El cliente HTTP conserva la cookie access_token; volver a iniciar sesión al cambiar de rol.
+
+### Servicio disponible
+GET http://localhost:8000/health
+
+### Login administrador (200 y cookie HttpOnly)
 POST {{api}}/auth/token
 Content-Type: application/x-www-form-urlencoded
 
 username={{admin}}&password={{adminPassword}}
 
-### Consultar el resumen de administración
-GET {{api}}/admin/summary
+### Perfil del administrador (200)
+GET {{api}}/auth/me
 
-### Consultar el catálogo paginado
-GET {{api}}/products?page=1&page_size=12&search=&category_id=
+### Resumen administrativo (200)
+GET {{api}}/pedidos/resumen
 
-### Registrar una cuenta cliente
+### Catálogo paginado (200; por defecto skip=0, limit=20)
+GET {{api}}/productos?skip=0&limit=12
+
+### Buscar sin distinguir mayúsculas (200)
+GET {{api}}/productos?skip=0&limit=12&search=manzanas
+
+### Filtrar por categoría (200)
+GET {{api}}/productos?skip=0&limit=12&categoria_id=1&disponible=true
+
+### Ver un producto (200)
+GET {{api}}/productos/{{productoSemilla}}
+
+### Producto inexistente (404)
+GET {{api}}/productos/{{productoInexistente}}
+
+### Validación de parámetros de paginación (422)
+GET {{api}}/productos?skip=-1&limit=101
+
+### Listar categorías como administrador (200; incluye inactivas)
+GET {{api}}/categorias
+
+### Error: categoría con nombre duplicado (409)
+POST {{api}}/categorias
+Content-Type: application/json
+
+{"nombre":"Frutas y verduras","descripcion":"Duplicada"}
+
+### Error: nombre de categoría nulo en actualización (422)
+PUT {{api}}/categorias/1
+Content-Type: application/json
+
+{"nombre":null}
+
+### Error: actualizar con el nombre de otra categoría activa (409)
+PUT {{api}}/categorias/2
+Content-Type: application/json
+
+{"nombre":"Frutas y verduras"}
+
+### Crear categoría de prueba (201)
+POST {{api}}/categorias
+Content-Type: application/json
+
+{"nombre":"Prueba HTTP","descripcion":"Categoría para verificar el ciclo de baja lógica."}
+
+### Error: cuerpo de producto inválido (422)
+POST {{api}}/productos
+Content-Type: application/json
+
+{"categoria_id":1,"nombre":"A","precio_base":-1,"stock":-2,"disponible":true}
+
+### Error: crear un producto en una categoría inexistente (404)
+POST {{api}}/productos
+Content-Type: application/json
+
+{"categoria_id":999999,"nombre":"Producto inválido","precio_base":900,"stock":1,"disponible":true}
+
+### Crear producto de prueba (201)
+POST {{api}}/productos
+Content-Type: application/json
+
+{"categoria_id":4,"nombre":"Producto HTTP","descripcion":"Registro descartable para validar el ABM.","precio_base":900,"stock":10,"disponible":true}
+
+### Edición parcial de producto (200)
+PUT {{api}}/productos/9
+Content-Type: application/json
+
+{"precio_base":950}
+
+### Cambio de stock y disponibilidad (200)
+PATCH {{api}}/productos/9/stock
+Content-Type: application/json
+
+{"stock":12,"disponible":true}
+
+### Error: actualización de stock vacía (422)
+PATCH {{api}}/productos/9/stock
+Content-Type: application/json
+
+{}
+
+### Listar usuarios como administrador (200)
+GET {{api}}/admin/usuarios
+
+### Error: el administrador no puede desactivar su propia cuenta (400)
+POST {{api}}/admin/usuarios/1/desactivar
+
+### Registrar cliente (201)
 POST {{api}}/auth/register
 Content-Type: application/json
 
-{
-  "username": "cliente_demo",
-  "full_name": "Cliente Demo",
-  "email": "cliente.demo@example.com",
-  "password": "ClienteDemo123!"
-}
+{"username":"{{cliente}}","full_name":"Cliente de demostración","email":"{{clienteEmail}}","password":"{{clientePassword}}"}
 
-### Iniciar sesión como cliente (copiar la cookie access_token del paso anterior)
+### Registrar un segundo cliente para comprobar aislamiento de pedidos (201)
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{"username":"{{otroCliente}}","full_name":"Segundo cliente de demostración","email":"cliente.demo2@example.com","password":"{{otroClientePassword}}"}
+
+### Error: usuario duplicado (409)
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{"username":"{{cliente}}","full_name":"Cliente de demostración","email":"{{clienteEmail}}","password":"{{clientePassword}}"}
+
+### Error: correo duplicado con otro nombre de usuario (409)
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{"username":"cliente_demo3","full_name":"Cliente de demostración","email":"{{clienteEmail}}","password":"ClienteDemo789!"}
+
+### Desactivar el segundo cliente (200)
+POST {{api}}/admin/usuarios/{{otroClienteId}}/desactivar
+
+### Error: una cuenta desactivada no puede iniciar sesión (400)
 POST {{api}}/auth/token
 Content-Type: application/x-www-form-urlencoded
 
-username=cliente_demo&password=ClienteDemo123!
+username={{otroCliente}}&password={{otroClientePassword}}
 
-### Crear un pedido; los precios se leen del catálogo y el stock se descuenta en la misma transacción
-POST {{api}}/orders
+### Reactivar el segundo cliente (200)
+POST {{api}}/admin/usuarios/{{otroClienteId}}/activar
+
+### Deshabilitar temporalmente un producto (200)
+PATCH {{api}}/productos/{{productoSemilla}}/stock
 Content-Type: application/json
 
-{
-  "items": [
-    {"producto_id": 1, "cantidad": 2},
-    {"producto_id": 4, "cantidad": 1}
-  ],
-  "forma_pago": "TRANSFERENCIA",
-  "direccion_entrega": "Av. Siempre Viva 123, Buenos Aires",
-  "notas": "Entregar en recepción"
-}
+{"disponible":false}
 
-### Consultar pedidos propios
-GET {{api}}/orders
+### Login cliente (200 y cookie HttpOnly)
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
 
-### Consultar pedido propio por id
-GET {{api}}/orders/1
+username={{cliente}}&password={{clientePassword}}
 
-### Cancelar un pedido propio pendiente y restituir stock
-POST {{api}}/orders/1/cancel
-
-### Transicionar un pedido como administrador
-PATCH {{api}}/admin/orders/1/state
+### Un cliente no puede crear categorías (403)
+POST {{api}}/categorias
 Content-Type: application/json
 
-{"estado": "EN_PREPARACION"}
+{"nombre":"Categoría no autorizada"}
 
-### Consultar usuarios (administrador)
-GET {{api}}/admin/users
+### Error: producto no disponible (400)
+POST {{api}}/pedidos
+Content-Type: application/json
+
+{"items":[{"producto_id":1,"cantidad":1}],"forma_pago":"EFECTIVO","direccion_entrega":"Calle Falsa 123"}
+
+### Volver a iniciar sesión como administrador para restaurar el producto
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{admin}}&password={{adminPassword}}
+
+### Restaurar disponibilidad del producto (200)
+PATCH {{api}}/productos/{{productoSemilla}}/stock
+Content-Type: application/json
+
+{"disponible":true}
+
+### Volver a iniciar sesión como cliente
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{cliente}}&password={{clientePassword}}
+
+### Crear pedido (201; descuenta stock en la misma transacción)
+POST {{api}}/pedidos
+Content-Type: application/json
+
+{"items":[{"producto_id":1,"cantidad":2},{"producto_id":4,"cantidad":1}],"forma_pago":"TRANSFERENCIA","direccion_entrega":"Av. Siempre Viva 123, Buenos Aires","notas":"Entregar en recepción"}
+
+### Error: producto repetido en el mismo pedido (400)
+POST {{api}}/pedidos
+Content-Type: application/json
+
+{"items":[{"producto_id":1,"cantidad":1},{"producto_id":1,"cantidad":1}],"forma_pago":"EFECTIVO","direccion_entrega":"Calle Falsa 123"}
+
+### Error: stock insuficiente (400; no debe descontar stock ni guardar pedido)
+POST {{api}}/pedidos
+Content-Type: application/json
+
+{"items":[{"producto_id":1,"cantidad":9999}],"forma_pago":"EFECTIVO","direccion_entrega":"Calle Falsa 123"}
+
+### Error: producto inexistente (404)
+POST {{api}}/pedidos
+Content-Type: application/json
+
+{"items":[{"producto_id":999999,"cantidad":1}],"forma_pago":"EFECTIVO","direccion_entrega":"Calle Falsa 123"}
+
+### Historial del cliente autenticado (200; paginado y limitado a su titularidad)
+GET {{api}}/pedidos?skip=0&limit=20
+
+### Consultar detalle propio (200; ajustar el ID al pedido recién creado)
+GET {{api}}/pedidos/{{pedidoSemilla}}
+
+### Otro cliente no puede consultar ese pedido (403)
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{otroCliente}}&password={{otroClientePassword}}
+
+### Consulta del pedido de otra persona (403)
+GET {{api}}/pedidos/{{pedidoSemilla}}
+
+### Iniciar sesión de nuevo con el titular del pedido
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{cliente}}&password={{clientePassword}}
+
+### Cancelar pedido pendiente propio (200; restituye el stock una sola vez)
+PATCH {{api}}/pedidos/{{pedidoSemilla}}/cancelar
+
+### Error: segundo intento de cancelar pedido ya cancelado (400)
+PATCH {{api}}/pedidos/{{pedidoSemilla}}/cancelar
+
+### Logout (200 y elimina la cookie HttpOnly)
+POST {{api}}/auth/logout
+
+### Volver a iniciar sesión como administrador antes de las siguientes operaciones
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{admin}}&password={{adminPassword}}
+
+### Listar todos los pedidos como administrador, con filtro opcional de estado
+GET {{api}}/pedidos?skip=0&limit=20&estado=PENDIENTE
+
+### Iniciar sesión como titular para crear el segundo pedido
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{cliente}}&password={{clientePassword}}
+
+### Crear pedido para verificar la gestión administrativa (201)
+POST {{api}}/pedidos
+Content-Type: application/json
+
+{"items":[{"producto_id":1,"cantidad":1}],"forma_pago":"EFECTIVO","direccion_entrega":"Av. Siempre Viva 123"}
+
+### Login administrador para cambiar el estado del segundo pedido
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{admin}}&password={{adminPassword}}
+
+### Transición permitida de estado (200; ajustar el ID)
+PATCH {{api}}/pedidos/{{pedidoAdministrativo}}/estado
+Content-Type: application/json
+
+{"estado":"EN_PREPARACION"}
+
+### Cancelación administrativa pendiente (200; repone el stock dentro de la transacción)
+PATCH {{api}}/pedidos/{{pedidoAdministrativo}}/estado
+Content-Type: application/json
+
+{"estado":"CANCELADO"}
+
+### Error: transición desde un estado terminal (400)
+PATCH {{api}}/pedidos/{{pedidoAdministrativo}}/estado
+Content-Type: application/json
+
+{"estado":"ENTREGADO"}
+
+### Dar de baja la categoría de prueba (204; el producto sigue activo)
+DELETE {{api}}/categorias/4
+
+### Dar de baja no libera el nombre único de la categoría (409)
+POST {{api}}/categorias
+Content-Type: application/json
+
+{"nombre":"Prueba HTTP","descripcion":"El nombre sigue reservado."}
+
+### Cerrar la sesión de administrador para probar el catálogo público
+POST {{api}}/auth/logout
+
+### El producto permanece visible aunque su categoría esté inactiva (200)
+GET {{api}}/productos?skip=0&limit=20&search=Producto%20HTTP
+
+### La categoría inactiva ya no aparece en el catálogo público
+GET {{api}}/categorias
+
+### Dar de baja el producto de prueba (204)
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{admin}}&password={{adminPassword}}
+
+DELETE {{api}}/productos/9
+
+### Un producto inactivo se trata como inexistente al comprar (404)
+POST {{api}}/pedidos
+Content-Type: application/json
+
+{"items":[{"producto_id":9,"cantidad":1}],"forma_pago":"EFECTIVO","direccion_entrega":"Av. Siempre Viva 123"}
+
+### Logout administrador
+POST {{api}}/auth/logout

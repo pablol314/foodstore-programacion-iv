@@ -12,16 +12,12 @@ class UnitOfWork:
         self.session: Session | None = None
 
     def __enter__(self) -> 'UnitOfWork':
-        from app.tpi.models import Categoria, DetallePedido, Pedido, Producto, Usuario
-        from app.core.base_repository import BaseRepository
-
         self.session = self.session_factory()
-        self.usuarios = BaseRepository(self.session, Usuario)
-        self.categorias = BaseRepository(self.session, Categoria)
-        self.productos = BaseRepository(self.session, Producto)
-        self.pedidos = BaseRepository(self.session, Pedido)
-        self.detalles = BaseRepository(self.session, DetallePedido)
+        self.attach_repositories()
         return self
+
+    def attach_repositories(self) -> None:
+        """Attach the repositories required by a domain-specific Unit of Work."""
 
     def __exit__(
         self,

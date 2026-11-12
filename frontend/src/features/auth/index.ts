@@ -1,2 +1,2 @@
 export { LoginPage, RegisterPage } from './pages/AuthPages'
-export { useSessionStore } from './sessionStore'
+export { useAuthStore, useAuthStore as useSessionStore } from '@/store/authStore'

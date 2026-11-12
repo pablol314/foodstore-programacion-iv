@@ -1,26 +1,27 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { useNotificationStore } from '@/store/notificationStore'
-import { messageFrom, storeApi } from '@/shared/api/foodstore'
-import { useSessionStore } from '@/features/auth/store'
+import { messageFrom } from '@/shared/api/foodstore'
+import { useAuthStore } from '@/store/authStore'
 
 const fieldClass = 'field mt-1.5'
 const buttonClass = 'rounded-full bg-forest px-5 py-3 text-xs font-extrabold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const setUser = useSessionStore((state) => state.setUser)
+  const location = useLocation()
+  const login = useAuthStore((state) => state.login)
   const [error, setError] = useState<string | null>(null)
+  const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/'
   const form = useForm({
     defaultValues: { username: '', password: '' },
     onSubmit: async ({ value }) => {
       setError(null)
       try {
-        await storeApi.login(value.username, value.password)
-        setUser(await storeApi.me())
-        navigate('/', { replace: true })
+        await login(value.username, value.password)
+        navigate(redirectTo, { replace: true })
       } catch (cause) { setError(messageFrom(cause)) }
     },
   })
@@ -41,26 +42,26 @@ export function LoginPage() {
           {([canSubmit, isSubmitting]) => <button className={`${buttonClass} w-full`} disabled={!canSubmit || isSubmitting} type="submit">{isSubmitting ? 'Ingresando…' : 'Ingresar'}</button>}
         </form.Subscribe>
       </form>
-      <p className="mt-6 text-center text-sm text-ink/60">¿Todavía no tenés cuenta? <Link className="font-bold text-forest underline" to="/register">Crear cuenta</Link></p>
+      <p className="mt-6 text-center text-sm text-ink/60">¿Todavía no tenés cuenta? <Link className="font-bold text-forest underline" to="/register" state={location.state}>Crear cuenta</Link></p>
     </section>
   </main>
 }
 
 export function RegisterPage() {
   const navigate = useNavigate()
-  const setUser = useSessionStore((state) => state.setUser)
+  const location = useLocation()
+  const register = useAuthStore((state) => state.register)
   const notify = useNotificationStore((state) => state.showNotification)
   const [error, setError] = useState<string | null>(null)
+  const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/'
   const form = useForm({
     defaultValues: { username: '', full_name: '', email: '', password: '' },
     onSubmit: async ({ value }) => {
       setError(null)
       try {
-        await storeApi.register(value)
-        await storeApi.login(value.username, value.password)
-        setUser(await storeApi.me())
+        await register(value)
         notify('Cuenta creada. ¡Bienvenido a FoodStore!')
-        navigate('/', { replace: true })
+        navigate(redirectTo, { replace: true })
       } catch (cause) { setError(messageFrom(cause)) }
     },
   })
@@ -84,7 +85,7 @@ export function RegisterPage() {
           {([canSubmit, isSubmitting]) => <button className={`${buttonClass} w-full`} disabled={!canSubmit || isSubmitting} type="submit">{isSubmitting ? 'Creando…' : 'Crear cuenta'}</button>}
         </form.Subscribe>
       </form>
-      <p className="mt-6 text-center text-sm text-ink/60">¿Ya tenés cuenta? <Link className="font-bold text-forest underline" to="/login">Ingresar</Link></p>
+      <p className="mt-6 text-center text-sm text-ink/60">¿Ya tenés cuenta? <Link className="font-bold text-forest underline" to="/login" state={location.state}>Ingresar</Link></p>
     </section>
   </main>
 }

@@ -1,2 +1,3 @@
 export { CartPage } from './pages/CartPage'
-export { useCartStore } from './cartStore'
+export { CheckoutPage } from './pages/CheckoutPage'
+export { useCartStore } from '@/store/cartStore'
