@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Aptos", "Inter", "Segoe UI", sans-serif;
+  --color-ink: #21302a;
+  --color-forest: #244c3c;
+  --color-moss: #dfe9dd;
+  --color-paper: #f5f5f0;
+  --color-sand: #e9e4d8;
+  --color-coral: #d97757;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+}
+
+:root.dark {
+  --color-ink: #e8eee9;
+  --color-forest: #b7d1c1;
+  --color-moss: #34473c;
+  --color-paper: #18221c;
+  --color-sand: #30392f;
+  --color-coral: #e29a7d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--color-paper); color: var(--color-ink); }
+button, input, select, textarea { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid #d97757;
+  outline-offset: 3px;
+}
+.field {
+  width: 100%;
+  border: 1px solid rgb(33 48 42 / 0.12);
+  border-radius: 0.85rem;
+  background-color: rgb(255 255 255 / 0.72);
+  padding: 0.72rem 0.85rem;
+  color: #21302a;
+  font-size: 0.75rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.field::placeholder { color: rgb(33 48 42 / 0.38); }
+.field:focus { border-color: #244c3c; box-shadow: 0 0 0 3px rgb(36 76 60 / 0.1); outline: none; }
+.field:disabled { cursor: not-allowed; opacity: 0.55; }
+.dark header { background-color: rgb(31 44 36 / 0.94); }
+.dark .bg-white { background-color: #25332b; }
+.dark .field { background-color: #202d25; color: #e8eee9; border-color: rgb(232 238 233 / 0.2); }
+.dark .field::placeholder { color: rgb(232 238 233 / 0.5); }
+.dark .field:focus { border-color: #b7d1c1; box-shadow: 0 0 0 3px rgb(183 209 193 / 0.16); }
+.dark [class~="bg-[#f8ece7]"] { background-color: #4a3029; }
+.dark [class~="text-[#9b3f28]"] { color: #f1b49b; }
+.dark [class~="text-[#a34e35]"] { color: #f1b49b; }

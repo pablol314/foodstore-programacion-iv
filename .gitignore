@@ -1,0 +1,16 @@
+# Local configuration and databases
+.env
+**/.env
+**/.env.local
+**/*.db
+
+# Python environments and generated files
+**/.venv/
+**/.validation_env/
+**/__pycache__/
+**/*.py[cod]
+
+# Frontend dependencies and build output
+**/node_modules/
+**/dist/
+**/*.tsbuildinfo

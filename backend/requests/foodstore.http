@@ -1,0 +1,64 @@
+@api = http://localhost:8000/api/v1
+@admin = admin
+@adminPassword = Admin1234!
+
+### Inicializar sesión administrativa
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username={{admin}}&password={{adminPassword}}
+
+### Consultar el resumen de administración
+GET {{api}}/admin/summary
+
+### Consultar el catálogo paginado
+GET {{api}}/products?page=1&page_size=12&search=&category_id=
+
+### Registrar una cuenta cliente
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "cliente_demo",
+  "full_name": "Cliente Demo",
+  "email": "cliente.demo@example.com",
+  "password": "ClienteDemo123!"
+}
+
+### Iniciar sesión como cliente (copiar la cookie access_token del paso anterior)
+POST {{api}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username=cliente_demo&password=ClienteDemo123!
+
+### Crear un pedido; los precios se leen del catálogo y el stock se descuenta en la misma transacción
+POST {{api}}/orders
+Content-Type: application/json
+
+{
+  "items": [
+    {"producto_id": 1, "cantidad": 2},
+    {"producto_id": 4, "cantidad": 1}
+  ],
+  "forma_pago": "TRANSFERENCIA",
+  "direccion_entrega": "Av. Siempre Viva 123, Buenos Aires",
+  "notas": "Entregar en recepción"
+}
+
+### Consultar pedidos propios
+GET {{api}}/orders
+
+### Consultar pedido propio por id
+GET {{api}}/orders/1
+
+### Cancelar un pedido propio pendiente y restituir stock
+POST {{api}}/orders/1/cancel
+
+### Transicionar un pedido como administrador
+PATCH {{api}}/admin/orders/1/state
+Content-Type: application/json
+
+{"estado": "EN_PREPARACION"}
+
+### Consultar usuarios (administrador)
+GET {{api}}/admin/users

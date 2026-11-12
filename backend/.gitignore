@@ -1,0 +1,6 @@
+.venv/
+.validation_env/
+__pycache__/
+*.py[cod]
+.env
+*.db
