@@ -52,7 +52,6 @@ La interfaz queda en `http://localhost:5173`. `VITE_API_URL` define la URL base 
 
 Las variables están documentadas en `backend/.env.example` y `frontend/.env.example`. En desarrollo se usa SQLite y `COOKIE_SECURE=false`. Para un despliegue HTTPS se debe configurar `COOKIE_SECURE=true`, una clave `SECRET_KEY` aleatoria y los orígenes reales en `FRONTEND_ORIGIN`.
 
-## Enlaces públicos de la entrega
+## Repositorio
 
 - [Repositorio FoodStore en GitHub](https://github.com/pablol314/foodstore-programacion-iv)
-- [Video de demostración de FoodStore](https://youtu.be/QoBd924VmP0)
