@@ -10,11 +10,10 @@
 @otroClienteId = 3
 @productoSemilla = 1
 @productoInexistente = 999999
-@pedidoSemilla = 1
-@pedidoAdministrativo = 2
 
 # Ejecutar sobre una base de demostración recién inicializada con `python -m app.db.seed`.
-# Los IDs de ejemplo suponen que el admin y el seed son los únicos registros iniciales.
+# Los IDs de usuarios y productos suponen una base recién inicializada.
+# REST Client resuelve los IDs de pedidos a partir de las respuestas nombradas.
 # El cliente HTTP conserva la cookie access_token; volver a iniciar sesión al cambiar de rol.
 
 ### Servicio disponible
@@ -198,6 +197,7 @@ Content-Type: application/x-www-form-urlencoded
 username={{cliente}}&password={{clientePassword}}
 
 ### Crear pedido (201; descuenta stock en la misma transacción)
+# @name pedidoCliente
 POST {{api}}/pedidos
 Content-Type: application/json
 
@@ -224,17 +224,17 @@ Content-Type: application/json
 ### Historial del cliente autenticado (200; paginado y limitado a su titularidad)
 GET {{api}}/pedidos?skip=0&limit=20
 
-### Consultar detalle propio (200; ajustar el ID al pedido recién creado)
-GET {{api}}/pedidos/{{pedidoSemilla}}
+### Consultar detalle propio (200)
+GET {{api}}/pedidos/{{pedidoCliente.response.body.$.id}}
 
-### Otro cliente no puede consultar ese pedido (403)
+### Iniciar sesión como el segundo cliente (200)
 POST {{api}}/auth/token
 Content-Type: application/x-www-form-urlencoded
 
 username={{otroCliente}}&password={{otroClientePassword}}
 
 ### Consulta del pedido de otra persona (403)
-GET {{api}}/pedidos/{{pedidoSemilla}}
+GET {{api}}/pedidos/{{pedidoCliente.response.body.$.id}}
 
 ### Iniciar sesión de nuevo con el titular del pedido
 POST {{api}}/auth/token
@@ -243,10 +243,10 @@ Content-Type: application/x-www-form-urlencoded
 username={{cliente}}&password={{clientePassword}}
 
 ### Cancelar pedido pendiente propio (200; restituye el stock una sola vez)
-PATCH {{api}}/pedidos/{{pedidoSemilla}}/cancelar
+PATCH {{api}}/pedidos/{{pedidoCliente.response.body.$.id}}/cancelar
 
 ### Error: segundo intento de cancelar pedido ya cancelado (400)
-PATCH {{api}}/pedidos/{{pedidoSemilla}}/cancelar
+PATCH {{api}}/pedidos/{{pedidoCliente.response.body.$.id}}/cancelar
 
 ### Logout (200 y elimina la cookie HttpOnly)
 POST {{api}}/auth/logout
@@ -267,6 +267,7 @@ Content-Type: application/x-www-form-urlencoded
 username={{cliente}}&password={{clientePassword}}
 
 ### Crear pedido para verificar la gestión administrativa (201)
+# @name pedidoAdmin
 POST {{api}}/pedidos
 Content-Type: application/json
 
@@ -278,20 +279,20 @@ Content-Type: application/x-www-form-urlencoded
 
 username={{admin}}&password={{adminPassword}}
 
-### Transición permitida de estado (200; ajustar el ID)
-PATCH {{api}}/pedidos/{{pedidoAdministrativo}}/estado
+### Transición permitida de estado (200)
+PATCH {{api}}/pedidos/{{pedidoAdmin.response.body.$.id}}/estado
 Content-Type: application/json
 
 {"estado":"EN_PREPARACION"}
 
-### Cancelación administrativa pendiente (200; repone el stock dentro de la transacción)
-PATCH {{api}}/pedidos/{{pedidoAdministrativo}}/estado
+### Cancelación administrativa en preparación (200; repone el stock dentro de la transacción)
+PATCH {{api}}/pedidos/{{pedidoAdmin.response.body.$.id}}/estado
 Content-Type: application/json
 
 {"estado":"CANCELADO"}
 
 ### Error: transición desde un estado terminal (400)
-PATCH {{api}}/pedidos/{{pedidoAdministrativo}}/estado
+PATCH {{api}}/pedidos/{{pedidoAdmin.response.body.$.id}}/estado
 Content-Type: application/json
 
 {"estado":"ENTREGADO"}
@@ -314,12 +315,13 @@ GET {{api}}/productos?skip=0&limit=20&search=Producto%20HTTP
 ### La categoría inactiva ya no aparece en el catálogo público
 GET {{api}}/categorias
 
-### Dar de baja el producto de prueba (204)
+### Volver a iniciar sesión como administrador (200)
 POST {{api}}/auth/token
 Content-Type: application/x-www-form-urlencoded
 
 username={{admin}}&password={{adminPassword}}
 
+### Dar de baja el producto de prueba (204)
 DELETE {{api}}/productos/9
 
 ### Un producto inactivo se trata como inexistente al comprar (404)

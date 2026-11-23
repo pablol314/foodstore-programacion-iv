@@ -8,7 +8,7 @@ Aplicación full stack para explorar un catálogo, administrar productos y categ
 
 - Python 3.11, 3.12 o 3.13.
 - PostgreSQL 15 o superior para el entorno de entrega; SQLite está disponible para desarrollo local.
-- Node.js 22 o superior y pnpm 9.15.4.
+- Node.js 22.12 o superior y pnpm 9.15.4.
 
 ## Backend
 
@@ -21,6 +21,8 @@ cp .env.example .env
 python -m app.db.seed
 uvicorn app.main:app --reload
 ```
+
+Para usar PostgreSQL, creá una base vacía y configurá `DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/foodstore` en `backend/.env` antes de ejecutar el seed. El valor del ejemplo usa SQLite para desarrollo local.
 
 La API queda en `http://localhost:8000` y su documentación interactiva en `http://localhost:8000/docs`. El seed crea las tablas, el usuario administrador, tres categorías y ocho productos. Credenciales iniciales: usuario `admin`, contraseña `Admin1234!` (configurables por variables de entorno).
 
@@ -52,4 +54,5 @@ Las variables están documentadas en `backend/.env.example` y `frontend/.env.exa
 
 ## Enlaces públicos de la entrega
 
-La consigna requiere incluir el enlace al repositorio público y al video de demostración de 10 a 15 minutos. El video debe ser grabado por el estudiante, mostrar la presentación inicial con cámara y recorrer compra, administración y restitución de stock al cancelar un pedido. Ambos enlaces se incorporarán aquí antes de generar el paquete final.
+- [Repositorio FoodStore en GitHub](https://github.com/pablol314/foodstore-programacion-iv)
+- [Video de demostración de FoodStore](https://youtu.be/QoBd924VmP0)
